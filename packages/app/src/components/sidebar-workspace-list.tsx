@@ -101,6 +101,7 @@ import { useToast } from "@/contexts/toast-context";
 import { getForgePresentation, normalizeForge } from "@/git/forge";
 import { toWorktreeArchiveRisk } from "@/git/worktree-archive-warning";
 import { hasVisibleOrderChanged, mergeWithRemainder } from "@/utils/sidebar-reorder";
+import { shouldArchiveClosedDraftWorkspace } from "@/workspace-tabs/close-cleanup";
 import { confirmDialog } from "@/utils/confirm-dialog";
 import type { SidebarStateBucket } from "@/utils/sidebar-agent-state";
 import { SidebarStatusWorkspaceList } from "@/components/sidebar/sidebar-status-list";
@@ -939,7 +940,14 @@ function SidebarAgentDraftRow({
       });
     };
 
-    if (workspaceId !== tabHostWorkspaceId || !routeActive) {
+    if (
+      shouldArchiveClosedDraftWorkspace({
+        draftWorkspaceId: workspaceId,
+        tabHostWorkspaceId,
+        routeActive,
+        routeWorkspaceEmpty: result === "workspace-empty",
+      })
+    ) {
       archiveIfUnused(workspaceId);
     }
     if (result === "workspace-empty" && routeActive) {

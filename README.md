@@ -263,7 +263,6 @@ When multiple old layouts merge into one project, tab state is retained; the fir
 is kept and incoming tabs join its matching panes. Entity tabs follow the current identity
 and deduplication rules. Migrated layouts are persisted and restored after restarting the client.
 
-
 ## Closing unused conversations
 
 Closing the last empty conversation tab returns to the project page. On supported hosts, the daemon also archives the unused workspace record so it does not remain in the sidebar under its branch name. This does not delete project files or the project itself.
@@ -273,6 +272,11 @@ Cleanup preserves workspaces with agent history (including archived agents), liv
 Delete an unsent **New workspace** draft from its sidebar hover button or right-click menu.
 Only that draft tab, its input, and attachments are removed; other conversations and project
 files are preserved. Removing the last content tab returns to the project page.
+
+Deleting a draft from the sidebar also retires its workspace record once no other tab
+hosts it — including the first, self-hosted conversation of a project — so no leftover
+entry reappears under the checkout name (for example `main`). The daemon re-verifies the
+workspace is empty before archiving.
 
 Opening a new conversation from the sidebar preserves existing tabs within the same project.
 The draft retains its own workspace for execution. Opening a conversation in another project
