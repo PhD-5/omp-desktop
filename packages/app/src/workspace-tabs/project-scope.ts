@@ -1,3 +1,4 @@
+import { listWorkspaceArchivePendingIds } from "@/contexts/session-workspace-upserts";
 import { useSessionStore, type WorkspaceDescriptor } from "@/stores/session-store";
 import {
   collectAllPanes,
@@ -540,6 +541,9 @@ export function ensureProjectLayoutsMigrated(
     serverId,
     layouts: result.layouts,
     workspaces: session.workspaces,
+    // Optimistic archives hide the record before the request completes and may
+    // restore it on failure; their drafts must survive that window.
+    preservedWorkspaceIds: new Set(listWorkspaceArchivePendingIds(serverId)),
   });
   if (prunedLayouts !== layoutStore.layoutByWorkspace) {
     const splitSizesByWorkspace = { ...layoutStore.splitSizesByWorkspace };
@@ -579,10 +583,12 @@ export function pruneDraftTabsOwnedByMissingWorkspaces(input: {
   serverId: string;
   layouts: Record<string, WorkspaceLayout>;
   workspaces: ReadonlyMap<string, Pick<WorkspaceDescriptor, "id" | "projectId">>;
+  preservedWorkspaceIds?: ReadonlySet<string>;
 }): Record<string, WorkspaceLayout> {
   const ownsWorkspace = (workspaceId: string): boolean =>
     input.workspaces.has(workspaceId) ||
-    [...input.workspaces.values()].some((workspace) => workspace.id === workspaceId);
+    [...input.workspaces.values()].some((workspace) => workspace.id === workspaceId) ||
+    (input.preservedWorkspaceIds?.has(workspaceId) ?? false);
 
   let next = input.layouts;
   for (const [key, layout] of Object.entries(input.layouts)) {

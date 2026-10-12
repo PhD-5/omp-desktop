@@ -608,4 +608,21 @@ describe("dead-owner draft pruning", () => {
       layouts,
     );
   });
+
+  it("keeps drafts owned by workspaces hidden behind an in-flight local archive", () => {
+    const layouts = {
+      "host:project:one": layout(
+        tab("rollback-draft", { kind: "draft", draftId: "rollback", workspaceId: "hidden" }),
+      ),
+    };
+
+    expect(
+      pruneDraftTabsOwnedByMissingWorkspaces({
+        serverId: "host",
+        layouts,
+        workspaces,
+        preservedWorkspaceIds: new Set(["hidden"]),
+      }),
+    ).toBe(layouts);
+  });
 });
