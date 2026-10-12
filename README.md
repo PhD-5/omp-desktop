@@ -214,7 +214,7 @@ localized units.
 
 ## Conversation names
 
-Rename a conversation from its tab's context menu. Renaming the workspace's primary conversation changes the workspace name; additional conversations keep their own titles. Accepted renames update the local tab title immediately, without waiting for a directory event. Saved names remain visible when switching tabs, including when a conversation is not loaded or its provider history is unavailable.
+Double-click a conversation row in the sidebar, or use its tab's context menu, to rename it. Renaming the workspace's primary conversation changes the workspace name; additional conversations keep their own titles. Accepted renames update the local tab title immediately, without waiting for a directory event. Saved names remain visible when switching tabs, including when a conversation is not loaded or its provider history is unavailable.
 
 Each tab reads its title and chooses its rename target from the conversation's own workspace,
 including when conversations from multiple workspaces within one project share the tab container.
@@ -222,6 +222,11 @@ Changing tabs or pane focus can change the tools' active workspace, but never a 
 primary-workspace identity or saved name.
 
 Tab-width measurements do not own titles or selection state. The daemon publishes saved metadata changes for unloaded conversations, and loading a provider session preserves any rename made during initialization.
+
+Hover a sidebar conversation to reveal **Delete**, **Archive**, and **Fork** shortcuts before
+the existing three-dot menu. Project and status groupings share these interactions. Delete
+still requires confirmation; Fork opens a new draft with the source conversation's history,
+without changing the original conversation. Shortcut clicks do not open, drag, or rename the row.
 
 ## Pinned conversation ordering
 

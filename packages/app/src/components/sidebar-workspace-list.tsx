@@ -17,6 +17,7 @@ import {
   Fragment,
   useCallback,
   useMemo,
+  useRef,
   useState,
   type ReactElement,
   type MutableRefObject,
@@ -108,6 +109,8 @@ import {
   SidebarWorkspaceContextMenu,
   SidebarWorkspaceMenu,
 } from "@/components/sidebar/sidebar-workspace-menu";
+import { SidebarWorkspaceQuickActions } from "@/components/sidebar/sidebar-workspace-quick-actions";
+import { useSidebarWorkspaceFork } from "@/components/sidebar/use-sidebar-workspace-fork";
 import { useLongPressDragInteraction } from "@/components/sidebar/use-long-press-drag-interaction";
 import { SidebarGroupToggleRow } from "@/components/sidebar/sidebar-group-toggle-row";
 import { useLimitedSidebarGroup } from "@/components/sidebar/use-limited-sidebar-group";
@@ -237,8 +240,7 @@ function isProjectSelectedByRoute(input: {
     input.enabled &&
     input.project.hosts.some(
       (host) =>
-        host.serverId === input.selection?.serverId &&
-        host.projectId === input.selection.projectId,
+        host.serverId === input.selection?.serverId && host.projectId === input.selection.projectId,
     )
   );
 }
@@ -312,6 +314,8 @@ interface WorkspaceRowInnerProps {
   archiveStatus?: "idle" | "pending" | "success";
   archivePendingLabel?: string;
   onArchive?: () => void;
+  onFork?: () => void;
+  forkPending?: boolean;
   onDelete?: () => void;
   deleteStatus?: "idle" | "pending" | "success";
   deletePendingLabel?: string;
@@ -654,6 +658,8 @@ function WorkspaceRowRightGroup({
   archivePendingLabel,
   archiveShortcutKeys,
   onArchive,
+  onFork,
+  forkPending,
   onMarkAsRead,
   onDelete,
   deleteStatus,
@@ -676,6 +682,8 @@ function WorkspaceRowRightGroup({
   archivePendingLabel?: string;
   archiveShortcutKeys?: ShortcutKey[][] | null;
   onArchive?: () => void;
+  onFork?: () => void;
+  forkPending?: boolean;
   onMarkAsRead?: () => void;
   onDelete?: () => void;
   deleteStatus?: "idle" | "pending" | "success";
@@ -721,6 +729,22 @@ function WorkspaceRowRightGroup({
             visible={kebab.showKebab}
             scrimBackdrop={showScrim ? backdrop : undefined}
           >
+            <SidebarWorkspaceQuickActions
+              workspaceKey={workspace.workspaceKey}
+              onDelete={onDelete}
+              onArchive={onArchive}
+              onFork={onFork}
+              deleteStatus={deleteStatus}
+              archiveStatus={archiveStatus}
+              forkPending={forkPending}
+              disabled={
+                isCreating ||
+                deleteStatus === "pending" ||
+                archiveStatus === "pending" ||
+                forkPending
+              }
+              visible={isHovered && !isTouchPlatform}
+            />
             {onArchive ? (
               <SidebarWorkspaceMenu
                 {...kebab.menuProps}
@@ -918,7 +942,9 @@ function SidebarAgentDraftRow({
       archiveIfUnused(workspaceId);
     }
     if (result === "workspace-empty" && routeActive) {
-      const projectId = useSessionStore.getState().sessions[serverId]?.workspaces.get(workspaceId)?.projectId;
+      const projectId = useSessionStore
+        .getState()
+        .sessions[serverId]?.workspaces.get(workspaceId)?.projectId;
       if (projectId) router.replace(buildHostProjectRoute(serverId, projectId));
     }
   }, [draftId, routeActive, serverId, t, tabHostWorkspaceId, tabId, toast, workspaceId]);
@@ -1041,13 +1067,16 @@ function ProjectHeaderRow({
     ...dragAttributes
   } = dragHandleProps?.attributes ?? {};
 
-  const handlePress = useCallback((event: GestureResponderEvent) => {
-    if (interaction.didLongPressRef.current) {
-      interaction.didLongPressRef.current = false;
-      return;
-    }
-    onPress(event);
-  }, [interaction.didLongPressRef, onPress]);
+  const handlePress = useCallback(
+    (event: GestureResponderEvent) => {
+      if (interaction.didLongPressRef.current) {
+        interaction.didLongPressRef.current = false;
+        return;
+      }
+      onPress(event);
+    },
+    [interaction.didLongPressRef, onPress],
+  );
 
   const handlePointerEnter = useCallback(() => {
     if (!contextMenuOpen) setIsHovered(true);
@@ -1206,6 +1235,8 @@ function WorkspaceRowInner({
   archiveStatus = "idle",
   archivePendingLabel,
   onArchive,
+  onFork,
+  forkPending,
   onDelete,
   deleteStatus,
   deletePendingLabel,
@@ -1334,6 +1365,8 @@ function WorkspaceRowInner({
                   archiveShortcutKeys={archiveShortcutKeys}
                   onArchive={onArchive}
                   onDelete={onDelete}
+                  onFork={onFork}
+                  forkPending={forkPending}
                   deleteStatus={deleteStatus}
                   deletePendingLabel={deletePendingLabel}
                   onCopyBranchName={onCopyBranchName}
@@ -1391,6 +1424,8 @@ function WorkspaceRowWithMenu({
   const activeRouteWorkspaceSelection = useActiveWorkspaceSelection();
   const [isHidingWorkspace, setIsHidingWorkspace] = useState(false);
   const [isRenameOpen, setIsRenameOpen] = useState(false);
+  const deleteConfirmationOpenRef = useRef(false);
+  const { canFork, isForking, fork } = useSidebarWorkspaceFork(workspace);
   const isArchiving = workspace.archivingAt !== null || isHidingWorkspace;
   const redirectAfterArchive = useCallback(() => {
     redirectIfArchivingActiveWorkspace({
@@ -1430,29 +1465,50 @@ function WorkspaceRowWithMenu({
   });
 
   const handleArchive = useCallback(() => {
-    if (isArchiving) {
+    if (isCreating || isArchiving || isDeleting || isForking) {
       return;
     }
     archiveController.archive();
-  }, [archiveController, isArchiving]);
+  }, [archiveController, isCreating, isArchiving, isDeleting, isForking]);
 
   const handleDelete = useCallback(async () => {
-    if (isArchiving || isDeleting) {
+    if (isCreating || isArchiving || isDeleting || isForking || deleteConfirmationOpenRef.current) {
       return;
     }
-    const confirmed = await confirmDialog({
-      title: t("sidebar.workspace.confirmations.deleteTitle", {
-        name: workspace.title ?? workspace.name,
-      }),
-      message: t("sidebar.workspace.confirmations.deleteMessage"),
-      confirmLabel: t("sidebar.workspace.actions.delete"),
-      cancelLabel: t("workspace.tabs.confirmations.cancel"),
-      destructive: true,
-    });
-    if (confirmed) {
-      deleteMutation.mutate();
+    deleteConfirmationOpenRef.current = true;
+    try {
+      const confirmed = await confirmDialog({
+        title: t("sidebar.workspace.confirmations.deleteTitle", {
+          name: workspace.title ?? workspace.name,
+        }),
+        message: t("sidebar.workspace.confirmations.deleteMessage"),
+        confirmLabel: t("sidebar.workspace.actions.delete"),
+        cancelLabel: t("workspace.tabs.confirmations.cancel"),
+        destructive: true,
+      });
+      if (confirmed) {
+        deleteMutation.mutate();
+      }
+    } finally {
+      deleteConfirmationOpenRef.current = false;
     }
-  }, [deleteMutation, isArchiving, isDeleting, t, workspace.name, workspace.title]);
+  }, [
+    deleteMutation,
+    isCreating,
+    isArchiving,
+    isDeleting,
+    isForking,
+    t,
+    workspace.name,
+    workspace.title,
+  ]);
+
+  const handleFork = useCallback(() => {
+    if (isCreating || isArchiving || isDeleting || isForking || !canFork) {
+      return;
+    }
+    void fork();
+  }, [canFork, fork, isCreating, isArchiving, isDeleting, isForking]);
 
   const handleCopyPath = useCallback(() => {
     let copyTargetDirectory: string;
@@ -1555,6 +1611,8 @@ function WorkspaceRowWithMenu({
         archiveStatus={isArchiving ? "pending" : "idle"}
         archivePendingLabel={t("sidebar.workspace.actions.archiving")}
         onArchive={handleArchive}
+        onFork={canFork ? handleFork : undefined}
+        forkPending={isForking}
         onDelete={handleDelete}
         deleteStatus={isDeleting ? "pending" : "idle"}
         deletePendingLabel={t("sidebar.workspace.actions.deleting")}
@@ -2010,26 +2068,43 @@ function ProjectBlock({
     })();
   }, [isRemovingProject, displayName, t, toast, project.hosts]);
 
-  const handleProjectPress = useCallback((event: GestureResponderEvent) => {
-    const nativeEvent: unknown = event.nativeEvent;
-    const metaKey = !!nativeEvent && typeof nativeEvent === "object" &&
-      "metaKey" in nativeEvent && nativeEvent.metaKey === true;
-    if (shouldFocusProjectOnPress({
-      metaKey,
-      isMacDesktop: platformIsWeb && getShortcutOs() === "mac" &&
-        (typeof navigator === "undefined" || navigator.maxTouchPoints < 2),
-    })) {
-      const host = project.hosts.find(
-        (candidate) => candidate.serverId === activeProjectSelection?.serverId,
-      ) ?? project.hosts[0];
-      if (host) {
-        onWorkspacePress?.();
-        navigateToProject({ serverId: host.serverId, projectId: host.projectId });
+  const handleProjectPress = useCallback(
+    (event: GestureResponderEvent) => {
+      const nativeEvent: unknown = event.nativeEvent;
+      const metaKey =
+        !!nativeEvent &&
+        typeof nativeEvent === "object" &&
+        "metaKey" in nativeEvent &&
+        nativeEvent.metaKey === true;
+      if (
+        shouldFocusProjectOnPress({
+          metaKey,
+          isMacDesktop:
+            platformIsWeb &&
+            getShortcutOs() === "mac" &&
+            (typeof navigator === "undefined" || navigator.maxTouchPoints < 2),
+        })
+      ) {
+        const host =
+          project.hosts.find(
+            (candidate) => candidate.serverId === activeProjectSelection?.serverId,
+          ) ?? project.hosts[0];
+        if (host) {
+          onWorkspacePress?.();
+          navigateToProject({ serverId: host.serverId, projectId: host.projectId });
+        }
+        return;
       }
-      return;
-    }
-    onToggleCollapsed(project.viewKey);
-  }, [activeProjectSelection?.serverId, onToggleCollapsed, onWorkspacePress, project.hosts, project.viewKey]);
+      onToggleCollapsed(project.viewKey);
+    },
+    [
+      activeProjectSelection?.serverId,
+      onToggleCollapsed,
+      onWorkspacePress,
+      project.hosts,
+      project.viewKey,
+    ],
+  );
 
   let projectChildren = null;
   if (!collapsed && project.workspaces.length > 0) {

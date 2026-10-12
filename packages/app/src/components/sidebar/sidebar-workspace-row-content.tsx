@@ -1,5 +1,5 @@
 import { memo, useMemo, useCallback, useState, type ReactNode } from "react";
-import { Text, View, type ViewStyle } from "react-native";
+import { Text, View, type LayoutChangeEvent, type ViewStyle } from "react-native";
 import { StyleSheet, withUnistyles } from "react-native-unistyles";
 import { CircleAlert, Folder, FolderGit2, Monitor, Pin } from "lucide-react-native";
 import { ProjectStatusIndicator } from "@/components/sidebar/project-leading-visual";
@@ -341,6 +341,9 @@ export const sidebarWorkspaceRowStyles = StyleSheet.create((theme) => ({
   trailingActionOverlay: {
     position: "absolute",
     top: 0,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 2,
     right: 0,
   },
 }));
@@ -385,7 +388,8 @@ export function resolveTrailingActionVisibility({
   reserveSlotWidth: boolean;
 } {
   const hasTrailing = hasSidebarWorkspaceTrailing({ workspace, trailing });
-  const showKebab = Boolean(hasArchiveAction && (isHovered || isTouchPlatform)) && !showShortcut;
+  const showKebab =
+    Boolean(hasArchiveAction && (isHovered || isTouchPlatform)) && (!showShortcut || isHovered);
   const showTrailing = hasTrailing && !showShortcut && (isHovered || !showKebab);
   return {
     showTrailing,
@@ -444,14 +448,22 @@ export function SidebarWorkspaceTrailingActionOverlay({
   scrimBackdrop?: SidebarSurfaceBackdrop;
   children: ReactNode;
 }) {
+  const [actionWidth, setActionWidth] = useState(0);
+  const handleLayout = useCallback((event: LayoutChangeEvent) => {
+    setActionWidth(event.nativeEvent.layout.width);
+  }, []);
   if (!visible || !children) return null;
   return (
-    <>
+    <View style={sidebarWorkspaceRowStyles.trailingActionOverlay} onLayout={handleLayout}>
       {scrimBackdrop ? (
-        <TrailingActionScrim backdrop={scrimBackdrop} testID="sidebar-workspace-trailing-scrim" />
+        <TrailingActionScrim
+          backdrop={scrimBackdrop}
+          width={actionWidth + 32}
+          testID="sidebar-workspace-trailing-scrim"
+        />
       ) : null}
-      <View style={sidebarWorkspaceRowStyles.trailingActionOverlay}>{children}</View>
-    </>
+      {children}
+    </View>
   );
 }
 
