@@ -509,6 +509,10 @@ export const ptBR: TranslationResources = {
     },
   },
   workspace: {
+    projectEmpty: {
+      description: "Ainda não há conversas",
+      newConversation: "Nova conversa",
+    },
     route: {
       loading: "Carregando workspace",
       connecting: "Conectando",
@@ -685,6 +689,8 @@ export const ptBR: TranslationResources = {
         copyAgentId: "Copiar ID do agente",
         copyTerminalId: "Copiar ID do terminal",
         copyFilePath: "Copiar caminho do arquivo",
+        revealInFiles: "Mostrar em Arquivos",
+        revealOutsideWorkspace: "O arquivo está fora deste workspace",
         rename: "Renomear",
         closeAbove: "Fechar abas acima",
         closeBelow: "Fechar abas abaixo",
@@ -1346,6 +1352,7 @@ export const ptBR: TranslationResources = {
   },
   newWorkspace: {
     title: "Novo workspace",
+    deleteDraft: "Excluir novo workspace",
     create: "Criar",
     fields: {
       project: "Projeto",

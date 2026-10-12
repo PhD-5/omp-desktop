@@ -531,6 +531,10 @@ export const en = {
     },
   },
   workspace: {
+    projectEmpty: {
+      description: "No conversations yet",
+      newConversation: "New conversation",
+    },
     route: {
       loading: "Loading workspace",
       connecting: "Connecting",
@@ -706,6 +710,8 @@ export const en = {
         copyAgentId: "Copy agent id",
         copyTerminalId: "Copy terminal id",
         copyFilePath: "Copy file path",
+        revealInFiles: "Reveal in Files",
+        revealOutsideWorkspace: "File is outside this workspace",
         rename: "Rename",
         closeAbove: "Close tabs above",
         closeBelow: "Close tabs below",
@@ -1356,6 +1362,7 @@ export const en = {
   },
   newWorkspace: {
     title: "New workspace",
+    deleteDraft: "Delete new workspace",
     create: "Create",
     fields: {
       project: "Project",

@@ -506,6 +506,10 @@ export const ar: TranslationResources = {
     },
   },
   workspace: {
+    projectEmpty: {
+      description: "لا توجد محادثات بعد",
+      newConversation: "محادثة جديدة",
+    },
     route: {
       loading: "جارٍ تحميل مساحة العمل",
       connecting: "الاتصال",
@@ -681,6 +685,8 @@ export const ar: TranslationResources = {
         copyAgentId: "نسخ معرف الوكيل",
         copyTerminalId: "نسخ معرف المحطة",
         copyFilePath: "Copy file path",
+        revealInFiles: "إظهار في الملفات",
+        revealOutsideWorkspace: "الملف خارج مساحة العمل هذه",
         rename: "إعادة تسمية",
         closeAbove: "إغلاق علامات التبويب أعلاه",
         closeBelow: "إغلاق علامات التبويب أدناه",
@@ -1318,6 +1324,7 @@ export const ar: TranslationResources = {
   },
   newWorkspace: {
     title: "مساحة عمل جديدة",
+    deleteDraft: "حذف مساحة العمل الجديدة",
     create: "يخلق",
     fields: {
       project: "المشروع",

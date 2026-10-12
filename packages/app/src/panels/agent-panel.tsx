@@ -107,7 +107,7 @@ import {
   useSessionStore,
 } from "@/stores/session-store";
 import { useWorkspaceLayoutStore } from "@/stores/workspace-layout-store";
-import { buildWorkspaceTabPersistenceKey } from "@/workspace-tabs/model";
+import { resolveProjectLayoutKey } from "@/workspace-tabs/project-scope";
 import { openSidePanelView } from "@/workspace-tabs/side-panel";
 import type { Theme } from "@/styles/theme";
 import type { PendingPermission } from "@/types/shared";
@@ -577,7 +577,7 @@ function AgentPanelBody({
   const [lookupState, setLookupState] = useState<AgentLookupState>({ tag: "idle" });
   const lookupAttemptTokenRef = useRef(0);
   const retryAgentLookup = useCallback(() => setLookupState({ tag: "idle" }), []);
-  const workspaceKey = buildWorkspaceTabPersistenceKey({ serverId, workspaceId });
+  const workspaceKey = resolveProjectLayoutKey({ serverId, workspaceId });
   const resolvePendingAgent = useWorkspaceLayoutStore((state) => state.resolvePendingAgent);
 
   useEffect(() => {
@@ -1782,8 +1782,8 @@ function ActiveAgentComposer({
       }
       openSidePanelView({
         isCompact: isCompactFormFactor,
-        workspaceKey: buildWorkspaceTabPersistenceKey({ serverId, workspaceId }),
-        checkout: { serverId, cwd: attachment.attachment.cwd, isGit: true },
+        workspaceKey: resolveProjectLayoutKey({ serverId, workspaceId }),
+        checkout: { serverId, workspaceId, cwd: attachment.attachment.cwd, isGit: true },
         view: "changes",
       });
     },
@@ -1797,7 +1797,7 @@ function ActiveAgentComposer({
         throw new Error("Agent not found");
       }
 
-      const workspaceKey = buildWorkspaceTabPersistenceKey({ serverId, workspaceId });
+      const workspaceKey = resolveProjectLayoutKey({ serverId, workspaceId });
       if (workspaceKey) {
         unpinWorkspaceAgent(workspaceKey, agentId);
         hideWorkspaceAgent(workspaceKey, agentId);
@@ -1807,6 +1807,7 @@ function ActiveAgentComposer({
         retargetCurrentTab({
           kind: "draft",
           draftId: generateDraftId(),
+          workspaceId,
           setup: buildDraftAgentSetup(agent),
         });
       } else if (workspaceKey) {
