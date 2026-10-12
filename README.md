@@ -278,6 +278,12 @@ Opening a new conversation from the sidebar preserves existing tabs within the s
 The draft retains its own workspace for execution. Opening a conversation in another project
 switches to that project's layout instead of adding it to the current project's tabs.
 
+Archiving a conversation does not create another draft or relabel surviving sidebar entries.
+If a different conversation is focused in the same project, it stays focused and navigation
+uses its owning workspace. Only the archived conversation's tabs are closed. Workspace open
+intents are scoped to the current page, so a parent route's consumed intent cannot reopen an
+archived conversation in another workspace.
+
 Conversation notifications follow the same rule: reveal or add the conversation in its owning
 project, preserving that project's other tabs, order, and split panes. Notification navigation
 does not change the conversation's owning workspace.
