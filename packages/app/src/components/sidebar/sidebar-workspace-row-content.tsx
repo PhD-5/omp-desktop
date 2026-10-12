@@ -29,6 +29,10 @@ import { StatusRing } from "@/components/status-ring";
 import { resolveSidebarWorkspacePrimaryLabel } from "@/components/sidebar/sidebar-workspace-title";
 import { TrailingActionScrim } from "@/components/ui/trailing-action-scrim";
 import { useWorkspaceLabelDefinitions } from "@/workspace-labels";
+import {
+  SidebarWorkspaceInlineRename,
+  type SidebarWorkspaceRename,
+} from "@/components/sidebar/sidebar-workspace-inline-rename";
 
 const foregroundMutedColorMapping = (theme: Theme) => ({ color: theme.colors.foregroundMuted });
 const needsInputColorMapping = (theme: Theme) => ({
@@ -102,6 +106,7 @@ export const SidebarWorkspaceRowContent = memo(function SidebarWorkspaceRowConte
   shortcutNumber = null,
   showShortcutBadge = false,
   reserveIdleStatusIndicatorSpace = true,
+  rename,
   children,
 }: {
   workspace: SidebarWorkspaceEntry;
@@ -120,6 +125,7 @@ export const SidebarWorkspaceRowContent = memo(function SidebarWorkspaceRowConte
   showShortcutBadge?: boolean;
   /** Keep the empty leading slot when the workspace has no active status. */
   reserveIdleStatusIndicatorSpace?: boolean;
+  rename?: SidebarWorkspaceRename;
   children?: ReactNode;
 }) {
   const {
@@ -168,10 +174,14 @@ export const SidebarWorkspaceRowContent = memo(function SidebarWorkspaceRowConte
                 accessibilityLabel="Pinned"
               />
             ) : null}
-            <Text style={workspaceTitleTextStyle} numberOfLines={1}>
-              {workspaceLabel}
-            </Text>
-            <View style={sidebarWorkspaceRowStyles.rowRight}>{children}</View>
+            {rename ? (
+              <SidebarWorkspaceInlineRename workspaceKey={workspace.workspaceKey} rename={rename} />
+            ) : (
+              <Text style={workspaceTitleTextStyle} numberOfLines={1}>
+                {workspaceLabel}
+              </Text>
+            )}
+            {!rename ? <View style={sidebarWorkspaceRowStyles.rowRight}>{children}</View> : null}
           </View>
           <WorkspaceMetaRow
             currentBranch={null}
@@ -183,7 +193,7 @@ export const SidebarWorkspaceRowContent = memo(function SidebarWorkspaceRowConte
           />
         </View>
       </View>
-      {showShortcutBadge && shortcutNumber !== null ? (
+      {!rename && showShortcutBadge && shortcutNumber !== null ? (
         <View style={styles.shortcutBadgeOverlay} pointerEvents="none">
           <SidebarWorkspaceShortcutBadge number={shortcutNumber} />
         </View>

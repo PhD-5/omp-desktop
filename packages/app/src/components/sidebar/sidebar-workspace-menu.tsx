@@ -480,7 +480,7 @@ export function SidebarWorkspaceContextMenu({
       if (contextMenuOpen || !(event.target instanceof Element)) return;
       if (
         event.target.closest(
-          '[data-testid^="sidebar-workspace-quick-"],[data-testid^="sidebar-workspace-kebab-"],a,input,[role="link"]',
+          '[data-testid^="sidebar-workspace-quick-"],[data-testid^="sidebar-workspace-kebab-"],[data-testid^="sidebar-workspace-rename-"],a,input,[role="link"]',
         )
       )
         return;

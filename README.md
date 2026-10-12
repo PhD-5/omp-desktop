@@ -214,7 +214,7 @@ localized units.
 
 ## Conversation names
 
-Double-click a conversation row in the sidebar, or use its tab's context menu, to rename it. Renaming the workspace's primary conversation changes the workspace name; additional conversations keep their own titles. Accepted renames update the local tab title immediately, without waiting for a directory event. Saved names remain visible when switching tabs, including when a conversation is not loaded or its provider history is unavailable.
+Double-click a sidebar conversation row to edit its title in place, without a dialog. **Enter** confirms; **Esc** cancels and restores the original title. The row's Rename menu action uses the same inline editor; tab context menus also support renaming. Renaming the workspace's primary conversation changes the workspace name; additional conversations keep their own titles. Accepted renames update the local tab title immediately, without waiting for a directory event. Saved names remain visible when switching tabs, including when a conversation is not loaded or its provider history is unavailable.
 
 Each tab reads its title and chooses its rename target from the conversation's own workspace,
 including when conversations from multiple workspaces within one project share the tab container.

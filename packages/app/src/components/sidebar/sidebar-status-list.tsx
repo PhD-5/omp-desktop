@@ -37,7 +37,6 @@ import {
 import { useToast } from "@/contexts/toast-context";
 import { useMutation } from "@tanstack/react-query";
 import { getHostRuntimeStore } from "@/runtime/host-runtime";
-import { AdaptiveRenameModal } from "@/components/rename-modal";
 import { requireWorkspaceDirectory } from "@/utils/workspace-directory";
 import { redirectIfArchivingActiveWorkspace } from "@/utils/sidebar-workspace-archive-redirect";
 import { confirmDialog } from "@/utils/confirm-dialog";
@@ -58,6 +57,7 @@ import {
   SidebarWorkspaceTrailingActionSlot,
   sidebarWorkspaceRowStyles,
 } from "@/components/sidebar/sidebar-workspace-row-content";
+import type { SidebarWorkspaceRename } from "@/components/sidebar/sidebar-workspace-inline-rename";
 import { useOpenKebabMenuVisibility } from "@/components/sidebar/use-open-kebab-menu-visibility";
 import { SidebarWorkspaceQuickActions } from "@/components/sidebar/sidebar-workspace-quick-actions";
 import { useSidebarWorkspaceFork } from "@/components/sidebar/use-sidebar-workspace-fork";
@@ -517,7 +517,7 @@ function StatusWorkspaceRowWithMenu({
   const toast = useToast();
   const activeRouteWorkspaceSelection = useActiveWorkspaceSelection();
   const [isHidingWorkspace, setIsHidingWorkspace] = useState(false);
-  const [isRenameOpen, setIsRenameOpen] = useState(false);
+  const [isRenaming, setIsRenaming] = useState(false);
   const isArchiving = workspace.archivingAt !== null || isHidingWorkspace;
   const { canFork, isForking, fork } = useSidebarWorkspaceFork(workspace);
   const {
@@ -615,14 +615,22 @@ function StatusWorkspaceRowWithMenu({
     },
   });
 
-  const handleOpenRename = useCallback(() => setIsRenameOpen(true), []);
-  const handleCloseRename = useCallback(() => setIsRenameOpen(false), []);
+  const handleOpenRename = useCallback(() => setIsRenaming(true), []);
+  const handleCloseRename = useCallback(() => setIsRenaming(false), []);
   const handleSubmitRename = useCallback(
     async (value: string) => {
       await renameMutation.mutateAsync(value.trim());
     },
     [renameMutation],
   );
+  const rename: SidebarWorkspaceRename | undefined = isRenaming
+    ? {
+        initialValue: workspace.title ?? workspace.name,
+        placeholder: workspace.name,
+        onSubmit: handleSubmitRename,
+        onCancel: handleCloseRename,
+      }
+    : undefined;
   const isPinned = workspace.pinnedAt != null;
   const handleTogglePin = useCallback(() => {
     onToggleWorkspacePin(workspace);
@@ -652,54 +660,43 @@ function StatusWorkspaceRowWithMenu({
   });
 
   return (
-    <>
-      <StatusWorkspaceRowInner
-        workspace={workspace}
-        hostBadge={hostBadge}
-        projectName={projectName}
-        projectIconDataUri={projectIconDataUri}
-        selected={selected}
-        shortcutNumber={shortcutNumber}
-        showShortcutBadge={showShortcutBadge}
-        onPress={onPress}
-        isArchiving={isArchiving}
-        isDeleting={isDeleting}
-        isForking={isForking}
-        canFork={canFork}
-        archiveLabel={t("sidebar.workspace.actions.archive")}
-        archiveStatus={isArchiving ? "pending" : "idle"}
-        archivePendingLabel={t("sidebar.workspace.actions.archiving")}
-        onArchive={handleArchive}
-        onDelete={handleDelete}
-        deleteStatus={isDeleting ? "pending" : "idle"}
-        deletePendingLabel={t("sidebar.workspace.actions.deleting")}
-        onFork={handleFork}
-        onCopyBranchName={workspace.projectKind === "git" ? handleCopyBranchName : undefined}
-        onCopyPath={handleCopyPath}
-        onReferenceContent={canReferenceContent ? referenceContent : undefined}
-        referenceContentStatus={isReferencingContent ? "pending" : "idle"}
-        onRename={handleOpenRename}
-        onMarkAsRead={hasClearableAttention ? handleMarkAsRead : undefined}
-        archiveShortcutKeys={selected ? archiveShortcutKeys : null}
-        isPinned={isPinned}
-        onTogglePin={onTogglePin}
-        reserveIdleStatusIndicatorSpace={reserveIdleStatusIndicatorSpace}
-        inStatusGroup={inStatusGroup}
-        drag={drag}
-        isDragging={isDragging}
-        dragHandleProps={dragHandleProps}
-      />
-      <AdaptiveRenameModal
-        visible={isRenameOpen}
-        title="Rename workspace"
-        initialValue={workspace.title ?? workspace.name}
-        placeholder={workspace.name}
-        submitLabel="Rename"
-        onClose={handleCloseRename}
-        onSubmit={handleSubmitRename}
-        testID={`sidebar-workspace-rename-modal-${workspace.workspaceKey}`}
-      />
-    </>
+    <StatusWorkspaceRowInner
+      workspace={workspace}
+      hostBadge={hostBadge}
+      projectName={projectName}
+      projectIconDataUri={projectIconDataUri}
+      selected={selected}
+      shortcutNumber={shortcutNumber}
+      showShortcutBadge={showShortcutBadge}
+      onPress={onPress}
+      rename={rename}
+      isArchiving={isArchiving}
+      isDeleting={isDeleting}
+      isForking={isForking}
+      canFork={canFork}
+      archiveLabel={t("sidebar.workspace.actions.archive")}
+      archiveStatus={isArchiving ? "pending" : "idle"}
+      archivePendingLabel={t("sidebar.workspace.actions.archiving")}
+      onArchive={handleArchive}
+      onDelete={handleDelete}
+      deleteStatus={isDeleting ? "pending" : "idle"}
+      deletePendingLabel={t("sidebar.workspace.actions.deleting")}
+      onFork={handleFork}
+      onCopyBranchName={workspace.projectKind === "git" ? handleCopyBranchName : undefined}
+      onCopyPath={handleCopyPath}
+      onReferenceContent={canReferenceContent ? referenceContent : undefined}
+      referenceContentStatus={isReferencingContent ? "pending" : "idle"}
+      onRename={handleOpenRename}
+      onMarkAsRead={hasClearableAttention ? handleMarkAsRead : undefined}
+      archiveShortcutKeys={selected ? archiveShortcutKeys : null}
+      isPinned={isPinned}
+      onTogglePin={onTogglePin}
+      reserveIdleStatusIndicatorSpace={reserveIdleStatusIndicatorSpace}
+      inStatusGroup={inStatusGroup}
+      drag={drag}
+      isDragging={isDragging}
+      dragHandleProps={dragHandleProps}
+    />
   );
 }
 
@@ -712,6 +709,7 @@ interface StatusWorkspaceRowInnerProps {
   shortcutNumber: number | null;
   showShortcutBadge: boolean;
   onPress: () => void;
+  rename?: SidebarWorkspaceRename;
   isArchiving: boolean;
   isDeleting: boolean;
   isForking: boolean;
@@ -767,6 +765,7 @@ function StatusWorkspaceRowInnerContent({
   shortcutNumber,
   showShortcutBadge,
   onPress,
+  rename,
   isArchiving,
   isDeleting,
   isForking,
@@ -821,14 +820,16 @@ function StatusWorkspaceRowInnerContent({
       didLongPressRef.current = false;
       return;
     }
+    if (rename) return;
     onPress();
-  }, [didLongPressRef, onPress]);
+  }, [didLongPressRef, onPress, rename]);
   const handlePressIn = useCallback(
     (event: GestureResponderEvent) => {
+      if (rename) return;
       setIsPressed(true);
       startDragPress?.(event);
     },
-    [startDragPress],
+    [rename, startDragPress],
   );
   const handlePressOut = useCallback(() => {
     setIsPressed(false);
@@ -864,7 +865,7 @@ function StatusWorkspaceRowInnerContent({
         return (
           <View
             {...dragAttributes}
-            {...dragHandleProps?.listeners}
+            {...(!rename ? dragHandleProps?.listeners : undefined)}
             ref={dragHandleProps?.setActivatorNodeRef as unknown as Ref<View>}
             style={styles.workspaceRowContainer}
             {...hoverHandlers}
@@ -900,7 +901,7 @@ function StatusWorkspaceRowInnerContent({
               style={workspaceRowStyle}
               highlightStyle={styles.workspaceRowPressed}
               onPressIn={handlePressIn}
-              onTouchMove={moveDragPress}
+              onTouchMove={rename ? undefined : moveDragPress}
               onPressOut={handlePressOut}
               onPress={handlePress}
               testID={`sidebar-workspace-row-${workspace.workspaceKey}`}
@@ -917,6 +918,7 @@ function StatusWorkspaceRowInnerContent({
                 isLoading={isArchiving || isDeleting || isForking}
                 shortcutNumber={shortcutNumber}
                 showShortcutBadge={showShortcutBadge}
+                rename={rename}
                 reserveIdleStatusIndicatorSpace={reserveIdleStatusIndicatorSpace}
               >
                 {renderSlot ? (
