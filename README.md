@@ -274,9 +274,10 @@ Only that draft tab, its input, and attachments are removed; other conversations
 files are preserved. Removing the last content tab returns to the project page.
 
 Deleting a draft from the sidebar also retires its workspace record once no other tab
-hosts it — including the first, self-hosted conversation of a project — so no leftover
-entry reappears under the checkout name (for example `main`). The daemon re-verifies the
-workspace is empty before archiving.
+hosts it. Each sidebar draft owns a distinct workspace, so sibling drafts never keep a
+deleted one alive, and no leftover entry reappears under the checkout name (for example
+`main`). Draft tabs whose workspace record no longer exists are pruned when the project
+layout loads. The daemon re-verifies the workspace is empty before archiving.
 
 Opening a new conversation from the sidebar preserves existing tabs within the same project.
 The draft retains its own workspace for execution. Opening a conversation in another project

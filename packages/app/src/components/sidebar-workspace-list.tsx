@@ -101,7 +101,6 @@ import { useToast } from "@/contexts/toast-context";
 import { getForgePresentation, normalizeForge } from "@/git/forge";
 import { toWorktreeArchiveRisk } from "@/git/worktree-archive-warning";
 import { hasVisibleOrderChanged, mergeWithRemainder } from "@/utils/sidebar-reorder";
-import { shouldArchiveClosedDraftWorkspace } from "@/workspace-tabs/close-cleanup";
 import { confirmDialog } from "@/utils/confirm-dialog";
 import type { SidebarStateBucket } from "@/utils/sidebar-agent-state";
 import { SidebarStatusWorkspaceList } from "@/components/sidebar/sidebar-status-list";
@@ -909,6 +908,13 @@ function SidebarAgentDraftRow({
     });
 
     const remainingLayouts = useWorkspaceLayoutStore.getState().layoutByWorkspace;
+    const hasRemainingTabsForWorkspace = Object.entries(remainingLayouts).some(
+      ([key, layout]) =>
+        key.startsWith(`${serverId}:project:`) &&
+        collectAllTabs(layout.root).some(
+          (entry) => entry.target.workspaceId?.trim() === workspaceId,
+        ),
+    );
     // Keep in-flight create attempts: the server request can complete after the tab is closed,
     // and archiveEmptyWorkspace uses them to protect workspaces from premature archival.
     const archiveIfUnused = (candidateId: string) => {
@@ -940,14 +946,11 @@ function SidebarAgentDraftRow({
       });
     };
 
-    if (
-      shouldArchiveClosedDraftWorkspace({
-        draftWorkspaceId: workspaceId,
-        tabHostWorkspaceId,
-        routeActive,
-        routeWorkspaceEmpty: result === "workspace-empty",
-      })
-    ) {
+    // Each sidebar draft owns a distinct workspace record; sibling drafts in the
+    // same project layout do not keep this one alive. Archiving it here prevents
+    // the closed record from resurfacing as a plain row under its checkout/branch
+    // name (e.g. "main"). archiveEmptyWorkspace re-verifies emptiness server-side.
+    if (!hasRemainingTabsForWorkspace) {
       archiveIfUnused(workspaceId);
     }
     if (result === "workspace-empty" && routeActive) {

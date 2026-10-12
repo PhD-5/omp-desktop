@@ -1,8 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  resolveClosedTabWorkspaceArchives,
-  shouldArchiveClosedDraftWorkspace,
-} from "@/workspace-tabs/close-cleanup";
+import { resolveClosedTabWorkspaceArchives } from "@/workspace-tabs/close-cleanup";
 
 describe("closed tab workspace cleanup", () => {
   it("archives a cross-workspace draft without archiving its non-empty tab host", () => {
@@ -41,51 +38,5 @@ describe("closed tab workspace cleanup", () => {
         routeWorkspaceEmpty: true,
       }),
     ).toEqual(["workspace-host"]);
-  });
-});
-
-describe("sidebar draft deletion archive decision", () => {
-  it("archives a self-hosted active draft once its close empties the project layout", () => {
-    expect(
-      shouldArchiveClosedDraftWorkspace({
-        draftWorkspaceId: "workspace-draft",
-        tabHostWorkspaceId: "workspace-draft",
-        routeActive: true,
-        routeWorkspaceEmpty: true,
-      }),
-    ).toBe(true);
-  });
-
-  it("keeps a self-hosted active draft's workspace while the layout still has content", () => {
-    expect(
-      shouldArchiveClosedDraftWorkspace({
-        draftWorkspaceId: "workspace-draft",
-        tabHostWorkspaceId: "workspace-draft",
-        routeActive: true,
-        routeWorkspaceEmpty: false,
-      }),
-    ).toBe(false);
-  });
-
-  it("archives a cross-workspace draft even while its route stays active", () => {
-    expect(
-      shouldArchiveClosedDraftWorkspace({
-        draftWorkspaceId: "workspace-draft",
-        tabHostWorkspaceId: "workspace-host",
-        routeActive: true,
-        routeWorkspaceEmpty: false,
-      }),
-    ).toBe(true);
-  });
-
-  it("archives an inactive draft hosted on its own workspace", () => {
-    expect(
-      shouldArchiveClosedDraftWorkspace({
-        draftWorkspaceId: "workspace-draft",
-        tabHostWorkspaceId: "workspace-draft",
-        routeActive: false,
-        routeWorkspaceEmpty: false,
-      }),
-    ).toBe(true);
   });
 });
