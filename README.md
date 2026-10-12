@@ -283,6 +283,10 @@ Opening a new conversation from the sidebar preserves existing tabs within the s
 The draft retains its own workspace for execution. Opening a conversation in another project
 switches to that project's layout instead of adding it to the current project's tabs.
 
+Opening an empty conversation from the sidebar always focuses its own tab: when the
+project's shared layout is showing a sibling conversation, the click seeds a fresh
+draft for that workspace instead of leaving the sibling visible.
+
 Archiving a conversation does not create another draft or relabel surviving sidebar entries.
 If a different conversation is focused in the same project, it stays focused and navigation
 uses its owning workspace. Only the archived conversation's tabs are closed. Workspace open
